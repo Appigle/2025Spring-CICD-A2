@@ -1,0 +1,30 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - aws --version
+      - echo Installing dependencies...
+      - npm install -g aws-cdk
+      - npm install
+
+  build:
+    commands:
+      - echo Building the CDK application...
+      - npm run build
+      - echo Synthesizing CDK stack...
+      - cdk synth LC5274-A2-Stack
+
+  post_build:
+    commands:
+      - echo CDK synthesis completed
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: cdk.out
+  name: LC5274-CDK-BuildArtifact
+
+cache:
+  paths:
+    - node_modules/**/*

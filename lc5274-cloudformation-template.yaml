@@ -1,0 +1,291 @@
+Resources:
+  LC5274Bucket22D0BE46:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Join:
+          - ''
+          - - lc5274-first-bucket-
+            - Ref: AWS::AccountId
+      VersioningConfiguration:
+        Status: Enabled
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: LC5274-A2-Stack/LC5274Bucket/Resource
+  LC5274Table96108858:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      TableName: LC5274-MyTable
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: LC5274-A2-Stack/LC5274Table/Resource
+  LC5274LambdaServiceRoleBCB64D09:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ''
+            - - 'arn:'
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: LC5274-A2-Stack/LC5274Lambda/ServiceRole/Resource
+  LC5274LambdaServiceRoleDefaultPolicy3888CA6D:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:Abort*
+              - s3:DeleteObject*
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:List*
+              - s3:PutObject
+              - s3:PutObjectLegalHold
+              - s3:PutObjectRetention
+              - s3:PutObjectTagging
+              - s3:PutObjectVersionTagging
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - LC5274Bucket22D0BE46
+                  - Arn
+              - Fn::Join:
+                  - ''
+                  - - Fn::GetAtt:
+                        - LC5274Bucket22D0BE46
+                        - Arn
+                    - /*
+          - Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:DeleteItem
+              - dynamodb:DescribeTable
+              - dynamodb:GetItem
+              - dynamodb:GetRecords
+              - dynamodb:GetShardIterator
+              - dynamodb:PutItem
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:UpdateItem
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - LC5274Table96108858
+                  - Arn
+              - Ref: AWS::NoValue
+        Version: '2012-10-17'
+      PolicyName: LC5274LambdaServiceRoleDefaultPolicy3888CA6D
+      Roles:
+        - Ref: LC5274LambdaServiceRoleBCB64D09
+    Metadata:
+      aws:cdk:path: LC5274-A2-Stack/LC5274Lambda/ServiceRole/DefaultPolicy/Resource
+  LC5274Lambda7487327C:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: "
+
+          \        exports.handler = async function(event) {
+
+          \          console.log('LC5274 Lambda invoked!');
+
+          \          console.log('Student ID: 5274');
+
+          \          console.log('Event:', JSON.stringify(event, null, 2));
+
+          \          return {\
+
+          \            statusCode: 200,\
+
+          \            body: JSON.stringify({
+
+          \              message: 'Hello from LC5274!',
+
+          \              studentId: '5274',
+
+          \              timestamp: new Date().toISOString()
+
+          \            })
+
+          \          };
+
+          \        }
+
+          \      "
+      Environment:
+        Variables:
+          BUCKET_NAME:
+            Ref: LC5274Bucket22D0BE46
+          TABLE_NAME:
+            Ref: LC5274Table96108858
+          STUDENT_ID: '5274'
+      FunctionName: LC5274-MyLambda
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+          - LC5274LambdaServiceRoleBCB64D09
+          - Arn
+      Runtime: nodejs18.x
+    DependsOn:
+      - LC5274LambdaServiceRoleDefaultPolicy3888CA6D
+      - LC5274LambdaServiceRoleBCB64D09
+    Metadata:
+      aws:cdk:path: LC5274-A2-Stack/LC5274Lambda/Resource
+  LC5274LambdaLogGroup6DE2A7BD:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ''
+          - - /aws/lambda/
+            - Ref: LC5274Lambda7487327C
+      RetentionInDays: 731
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: LC5274-A2-Stack/LC5274Lambda/LogGroup/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAA/6VSy27bMBD8luwxoFlX7Uk3p2iCokUb2L4JQbEiNw5jihT4cCAQ/PdClOS6SJtLT1rujGZ2h6x4ta74+gpf/ErI40qrlqddQHFk+OJ/Jv+Bp5sojhSaBG0pvmNHUMM1MDiR88oaklAHF4mBo86eUN9brcQANUjywdkB8gP79GgmoczkYLCzsuVpj62mJkGPLqigrPlKA9QJzG+PMPRjuYPMIIz0C/+37Yp4Zhq7ViJPt9GI0aJJ8DiXl1LRBHU+PaGRmtx8ElYuAJmTctZ0ZELpZJYApfx82W4K8xoe/gMsCywTZ6aw42lrS1bofexI3pSgeqeMUD3qjRA2zkOxmTP+sCkK86zQocEDyRKYIg91k/7oDRs3c5f59vZ+sVhibtKMhoDi6YvRytAZO6/2Jvhv3bL4ODib2iWSRW5vR+SVy+u2lLuAgcZU/cXAf2kXv8kqM20Pnqdv9nDnbOybBHouzw9l4i+MnNmWvI1O0PnqRvxHDH0MmRkriT/7d6eq4u8/8vXVs1dqNT81vp2+vwAPzqcEgwMAAA==
+    Metadata:
+      aws:cdk:path: LC5274-A2-Stack/CDKMetadata/Default
+    Condition: CDKMetadataAvailable
+Outputs:
+  LC5274BucketName:
+    Description: Name of the S3 bucket created for LC5274
+    Value:
+      Ref: LC5274Bucket22D0BE46
+  LC5274LambdaFunctionName:
+    Description: Name of the Lambda function created for LC5274
+    Value:
+      Ref: LC5274Lambda7487327C
+  LC5274TableName:
+    Description: Name of the DynamoDB table created for LC5274
+    Value:
+      Ref: LC5274Table96108858
+Conditions:
+  CDKMetadataAvailable:
+    Fn::Or:
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - af-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-3
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-4
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-northwest-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-2
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - il-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - sa-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-1
+      - Fn::Equals:
+          - Ref: AWS::Region
+          - us-west-2
+Parameters:
+  BootstrapVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+    Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
