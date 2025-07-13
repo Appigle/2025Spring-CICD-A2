@@ -26,7 +26,7 @@ export class LC5274Stack extends cdk.Stack {
       handler: 'index.handler',
       code: lambda.Code.fromInline(`
         exports.handler = async function(event) {
-          console.log('LC5274 Lambda invoked!');
+          console.log('LC5274 Lambda invoked! ----------Change Lambda and test codepipeline in aws');
           console.log('Student ID: 5274');
           console.log('Event:', JSON.stringify(event, null, 2));
           return { 
